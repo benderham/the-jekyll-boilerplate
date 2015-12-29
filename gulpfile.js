@@ -156,7 +156,7 @@ gulp.task('browserSync', ['sass', 'scripts', 'images', 'jekyll-rebuild'], functi
 
 /**
  * Watch
- * - Watch for changes to .scss, .js, image files and Jekyll files, then run the srcropriate tasks.
+ * - Watch for changes to .scss, .js, image files and Jekyll files, then run the appropriate tasks.
  */
 gulp.task('watch', function(){
   gulp.watch(src + '/_scss/**/*.scss', ['sass']);
