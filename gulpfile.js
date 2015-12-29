@@ -2,26 +2,24 @@
 var src = './_src/'
 var site = './_site/'
 
-// Load in Gulp requirements.
+/**
+ * Gulp plugins.
+ * @link https://www.npmjs.com/package/gulp-load-plugins
+ */
 var gulp = require('gulp');
-var sass = require('gulp-sass');
-var autoprefixer = require('gulp-autoprefixer');
-var nano = require('gulp-cssnano');
-var sourcemaps = require('gulp-sourcemaps');
-var concat = require('gulp-concat');
-var jshint = require('gulp-jshint');
-var stylish = require('jshint-stylish');
-var uglify = require('gulp-uglify');
-var imagemin = require('gulp-imagemin');
-var pngquant = require('imagemin-pngquant');
-var browserSync = require('browser-sync');
-var clean = require('gulp-clean');
+var plugins = require('gulp-load-plugins')({
+  pattern: '*',
+});
 var cp = require('child_process');
 
 // Variable to store messages, such as additional browserSync notifications.
 var messages = {
   jekyllBuild: '<span style="color: grey">Running:</span> $ jekyll build'
 };
+
+gulp.task('debug', function() {
+  console.log(plugins);
+})
 
 /**
  * SASS
@@ -32,22 +30,18 @@ var messages = {
  * - Inject compiled css into '_src/assets/css' for future Jekyll builds.
  */
 gulp.task('sass', function(){
-  return gulp.src(src + '_scss/main.scss')
-    
-    .pipe(sass())
-    .pipe(gulp.dest(src + 'assets/css'))
-    
-    .pipe(autoprefixer({
+  return gulp.src(src + '_scss/main.scss') 
+    .pipe(plugins.sass())
+    .pipe(gulp.dest(src + 'assets/css'))  
+    .pipe(plugins.autoprefixer({
       browsers: ['last 2 versions'],
       cascade: false
     }))
-    
-    .pipe(sourcemaps.init())
-    .pipe(nano())
-    .pipe(sourcemaps.write('.'))
-    
+    .pipe(plugins.sourcemaps.init())
+    .pipe(plugins.cssnano())
+    .pipe(plugins.sourcemaps.write('.'))   
     .pipe(gulp.dest(site + 'assets/css'))
-    .pipe(browserSync.stream())
+    .pipe(plugins.browserSync.stream())
     .pipe(gulp.dest(src + 'assets/css'))
 });
 
@@ -59,8 +53,8 @@ gulp.task('sass', function(){
  */
 gulp.task('lint', function() {
   return gulp.src(src + '_scripts/*.js')
-    .pipe(jshint())
-    .pipe(jshint.reporter(stylish))
+    .pipe(plugins.jshint())
+    .pipe(plugins.jshint.reporter('jshint-stylish'))
 });
 
 gulp.task('scripts', function() {
@@ -70,15 +64,15 @@ gulp.task('scripts', function() {
       src +'_scripts/vendor/**/*.js',
       src +'_scripts/main.js'
     ])
-    .pipe(concat('global.js'))
+    .pipe(plugins.concat('global.js'))
     .pipe(gulp.dest(site + 'assets/js'))
-    .pipe(browserSync.stream())
+    .pipe(plugins.browserSync.stream())
     .pipe(gulp.dest(src + 'assets/js'))
 });
 
 gulp.task('uglify-js', ['scripts'], function() {
   return gulp.src(src + 'assets/js/global.js')
-    .pipe(uglify())
+    .pipe(plugins.uglify())
     .pipe(gulp.dest(src + 'assets/js'))
 });
 
@@ -90,13 +84,13 @@ gulp.task('uglify-js', ['scripts'], function() {
  */
 gulp.task('images', function() {
   return gulp.src(src + '_images/**/*')
-    .pipe(imagemin({
+    .pipe(plugins.imagemin({
       progressive: true,
       svgoPlugins: [{removeViewBox: false}],
-      use: [pngquant()]
+      use: [plugins.imageminPngquant()]
     }))
     .pipe(gulp.dest(site + 'assets/img'))
-    .pipe(browserSync.stream())
+    .pipe(plugins.browserSync.stream())
     .pipe(gulp.dest(src + 'assets/img'))
 });
 
@@ -109,10 +103,10 @@ gulp.task('images', function() {
  */
 gulp.task('favicons', ['favicon-copy'], function() {
   return gulp.src(src + '_favicons/*.png')
-    .pipe(imagemin({
+    .pipe(plugins.imagemin({
       progressive: true,
       svgoPlugins: [{removeViewBox: false}],
-      use: [pngquant()]
+      use: [plugins.imageminPngquant()]
     }))
     .pipe(gulp.dest(src))
 });
@@ -127,7 +121,7 @@ gulp.task('favicon-copy', function() {
  * - Runs the required Jekyll Build commands.
  */
 gulp.task('jekyll-build', function (done) {
-  browserSync.notify(messages.jekyllBuild);
+  plugins.browserSync.notify(messages.jekyllBuild);
   return cp.spawn('jekyll', ['build'], {stdio: 'inherit'})
     .on('close', done);
 });
@@ -137,7 +131,7 @@ gulp.task('jekyll-build', function (done) {
  * - Rebuilds Jekyll and performs a full browser reload.
  */
 gulp.task('jekyll-rebuild', ['jekyll-build'], function () {
-  browserSync.reload();
+  plugins.browserSync.reload();
 });
 
 /**
@@ -146,12 +140,12 @@ gulp.task('jekyll-rebuild', ['jekyll-build'], function () {
  * - Runs sass, scripts, images and jekyll-rebuild before serving from 'site/'.
  */
 gulp.task('browserSync', ['sass', 'scripts', 'images', 'jekyll-rebuild'], function() {
-  browserSync({
+  plugins.browserSync({
     server: {
       baseDir: site
     },
   })
-  browserSync.reload();
+  plugins.browserSync.reload();
 });
 
 /**
@@ -177,7 +171,7 @@ gulp.task('clean', function () {
       src + '/*.png',
       src + '/favicon.ico',
     ], {read: false})
-    .pipe(clean());
+    .pipe(plugins.clean());
 });
 
 /**
@@ -193,7 +187,6 @@ gulp.task('default', ['browserSync', 'watch']);
  * - Processes js, including minification.
  * - Runs Jekyll build process.
  */
-gulp.task('build', ['favicons', 'images', 'sass', 'scripts', 'uglify-js'], function (done) {
-  return cp.spawn('jekyll', ['build'], {stdio: 'inherit'})
-    .on('close', done);
+gulp.task('build', ['favicons', 'images', 'sass', 'scripts', 'uglify-js'], function() {
+  gulp.start('jekyll-build');
 });

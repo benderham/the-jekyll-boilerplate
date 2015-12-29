@@ -1,5 +1,7 @@
 _site/
 _src/assets/
+_src/*.png
+_src/*.ico
 
 .jekyll-metadata
 
