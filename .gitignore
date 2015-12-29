@@ -1,5 +1,6 @@
-_site
-.sass-cache
+_site/
+_src/assets/
+
 .jekyll-metadata
 
 node_modules/
@@ -27,4 +28,3 @@ Icon
 Network Trash Folder
 Temporary Items
 .apdisk
-Status API Training Shop Blog About Pricing
